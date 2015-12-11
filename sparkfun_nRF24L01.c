@@ -1,4 +1,3 @@
-#include "accel.h"
 #include "NU32.h"
 #include "sparkfun_nRF24L01.h"
 
@@ -8,6 +7,8 @@
 // SDI4 (F4) -> SDO
 // SCK4 (B14) -> SCL
 // RB8 -> CS
+
+char msg[20];
 
 // send a byte via spi and return the response
 unsigned char spi_io(unsigned char o) {
@@ -71,15 +72,15 @@ void transmit_data(char *data_to_send, int n_bytes){
   }
   CS = 1;                             
 
-  TX_CE = 1;                          //Pulse CE to start transmission
+  CE = 1;                          //Pulse CE to start transmission
 
-  for (counter = 0; counter < 8000; counter++){;}  // Wait for 1 ms (assuming the PIC clock is set to 8MHz)
+  for (counter = 0; counter < 80000; counter++){;}  // Wait for 1 ms (assuming the PIC clock is set to 80MHz)
 
-  TX_CE = 0;
+  CE = 0;
 }
 
 void configure_transmitter(){
-  TX_CE = 0;                // CE is reponsible to control state transitions
+  CE = 0;                        // CE is reponsible to control state transitions
 
   // config radio registers
   // Write command is devined by 0b001A AAAA where A is substituted by the register address
@@ -96,11 +97,11 @@ void configure_transmitter(){
 
   //radio_write_register(0x30, 0xE7); // set address E7E7E7E7E7
 
-  radio_write_register(0x21, 0x00); // //disable auto-ack, RX mode, shouldn't have to do this, but it won't TX if you don't
+  radio_write_register(0x21, 0x00); //disable auto-ack, RX mode, shouldn't have to do this, but it won't TX if you don't
 }
 
 void configure_receiver(){
-  RX_CE = 0;
+  CE = 0;
 
   radio_write_register(0x20, 0x39); //PRX, CRC enabled
 
@@ -118,7 +119,16 @@ void configure_receiver(){
 
   radio_write_register(0x20, 0x3B); // Power up to change to change to STAND BY state
 
-  RX_CE = 1;
+  CE = 1;
+
+  int counter;
+  for (counter = 0; counter < 80000; counter++){;}
+
+  unsigned char status = 14;
+  status = radio_command(0xFF);
+  sprintf(msg,"%d", status);
+  NU32_WriteUART1("Status: \r\n");
+  NU32_WriteUART1(msg);
 }
 
 void reset_RX(unsigned char *output){
@@ -131,22 +141,58 @@ void reset_RX(unsigned char *output){
 }
 
 void radio_setup() {      // setup the radio, using SPI 4
+  AD1PCFGbits.PCFG8 = 1;
+  AD1PCFGbits.PCFG9 = 1;
+  AD1PCFGbits.PCFG10 = 1;
+
+
   CS_CONFIG = 0;
   CS = 1;
-  TX_CE_CONFIG = 0;         // Set port as digital output
+  CE_CONFIG = 0;         // Set port as digital output
+  RX_IRQ_CONFIG = 1;     // Set port as digital input
 
   // Master - SPI4, pins are: SDI4(F4), SDO4(F5), SCK4(B14).  
   // we manually control SS4 as a digital output (B8)
   // since the PIC is just starting, we know that spi is off. We rely on defaults here
  
   // setup SPI4
+  SPI4CON = 0;              // stop and reset SPI4
+  SPI4BUF;                  // read to clear the rx buffer
+  SPI4BRG = 0x3;            // bit rate to 10MHz, SPI4BRG = 80000000/(2*desired)-1
+  SPI4STATbits.SPIROV = 0;  // clear the overflow
+  SPI4CONbits.MSTEN = 1;    // master mode
+  SPI4CONbits.MODE16 = 1;   // 16 bit mode
+  SPI4CONbits.MODE32 = 0; 
+  SPI4CONbits.SMP = 1;      // sample at the end of the clock
+  SPI4CONbits.ON = 1;       // turn spi on
+
+}
+
+/*
+FROM ENCODER
+
+SPI4CON = 0;              // stop and reset SPI4
+  SPI4BUF;                  // read to clear the rx buffer
+  SPI4BRG = 0x3;            // bit rate to 10MHz, SPI4BRG = 80000000/(2*desired)-1
+  SPI4STATbits.SPIROV = 0;  // clear the overflow
+  SPI4CONbits.MSTEN = 1;    // master mode
+  SPI4CONbits.MODE16 = 1;   // 16 bit mode
+  SPI4CONbits.MODE32 = 0; 
+  SPI4CONbits.SMP = 1;      // sample at the end of the clock
+  SPI4CONbits.ON = 1;       // turn spi on
+
+*/
+
+/*
+FROM SAMPLES
+
   SPI4CON = 0;              // turn off the SPI module and reset it
   SPI4BUF;                  // clear the rx buffer by reading from it
   SPI4BRG = 0x3;            // baud rate to 10MHz [SPI4BRG = (80000000/(2*desired))-1]
   SPI4STATbits.SPIROV = 0;  // clear the overflow bit
   SPI4CONbits.CKE = 1;      // data changes when clock goes from active to inactive 
-                            //    (high to low since CKP is 0)
+                            // (high to low since CKP is 0)
   SPI4CONbits.MSTEN = 1;    // master operation
   SPI4CONbits.ON = 1;       // turn on SPI 4
 
-}
+*/

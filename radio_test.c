@@ -1,65 +1,69 @@
 //#define NU32_STANDALONE  // uncomment if program is standalone, not bootloaded
 #include "NU32.h"          // config bits, constants, funcs for startup and UART
-#include "LCD.h"
+//#include "LCD.h"
 #include "sparkfun_nRF24L01.h"
 
 #define MSG_LEN 20
 
+#define TRANSMITER 0
+
+void tx_routine();
+void rx_routine();
+
+char msg[MSG_LEN];
+unsigned char to_send[4] = {1, 2, 3, 4};
+unsigned char to_receive[4];
+
 int main() {
-  char msg[MSG_LEN];
-  int nreceived = 0, timer;
-  int gyro[3], accel[3], magn[3];
-
-  NU32_Startup();         // cache on, interrupts on, LED/button init, UART init
-  //NU32_WriteUART1("Before setup \r\n");
-  LCD_Setup();
-  //NU32_WriteUART1("After setup \r\n");
-  //NU32_WriteUART1("Before IMU setup \r\n");
-  nreceived = i2c_master_setup();
-  //NU32_WriteUART1("After IMU setup \r\n");
   
-  if(nreceived)
-    NU32_WriteUART1("IMU working!\r\n");
-  else
-    NU32_WriteUART1("IMU NOT working!\r\n");
+  NU32_Startup();         // cache on, interrupts on, LED/button init, UART init
 
-  config_gyro_accel_default();
+  DDPCONbits.JTAGEN = 0; // Disable JTAG, make pins 4 and 5 of Port A available.
+  TRISA = 0xFFCF;        // Pins 4 and 5 of Port A are LED1 and LED2.  Clear
+                         // bits 4/5 to zero, for output.  Others are inputs.
+  LATAbits.LATA4 = 0;    // Turn LED1 on and LED2 off.  These pins sink ...
+  LATAbits.LATA5 = 1;    // ... current on NU32, so "high" = "off."
 
-  while(nreceived){
-    for(timer = 0; timer < 100000000; timer++){;}
 
-    get_gyro(gyro);
-    sprintf(msg, "GX = %d | GY = %d | GZ = %d", gyro[0],gyro[1],gyro[2]);
-    NU32_WriteUART1(msg);
-    NU32_WriteUART1("\r\n");
-    for(timer = 0; timer < 1000000; timer++){;}
+  //LCD_Setup();
+  
+  radio_setup();
 
-    /*get_accel(accel);
-    sprintf(msg, "AX = %d | AY = %d | AZ = %d", accel[0],accel[1],accel[2]);
-    NU32_WriteUART1(msg);
-    NU32_WriteUART1("\r\n");
-    for(timer = 0; timer < 1000000; timer++){;}*/
-
-    /*get_mag(magn);
-    sprintf(msg, "MX = %d | MY = %d | MZ = %d", magn[0],magn[1],magn[2]);
-    NU32_WriteUART1(msg);
-    NU32_WriteUART1("\r\n");*/
+  if(TRANSMITER){
+    configure_transmitter();
+    tx_routine();
   }
-
+  else{
+    configure_receiver();
+    rx_routine();
+  }
   return 0;
 }
 
-/*
-  while (1) {
-    NU32_WriteUART1("What do you want to write? ");
-    NU32_ReadUART1(msg, MSG_LEN);             // get the response
-    LCD_Clear();                              // clear LCD screen
-    LCD_Move(0,0);
-    LCD_WriteString(msg);                     // write msg at row 0 col 0
-    sprintf(msg, "Received %d", nreceived);   // display how many messages received
-    ++nreceived;
-    LCD_Move(1,3);
-    LCD_WriteString(msg);                     // write new msg at row 0 col 2
-    NU32_WriteUART1("\r\n");          
+void tx_routine(){
+  int timer;
+  //NU32_WriteUART1("Start transmitter: \r\n");
+  while(1){
+    //NU32_WriteUART1("TX \r\n");
+    LATAINV = 0x30;
+    transmit_data(to_send, 4);
+    for(timer = 0; timer < 100000000; timer++){;}
   }
-*/
+}
+
+void rx_routine(){
+  int irq;
+  NU32_WriteUART1("Start receiver: \r\n");
+  while(1){
+    irq = RX_IRQ;
+    sprintf(msg, "IRQ = %d \r\n\n", irq);
+    NU32_WriteUART1(msg);
+    //NU32_WriteUART1("Message received: \r\n");
+    /*if(!RX_IRQ){
+      NU32_WriteUART1("Message received: \r\n");
+      reset_RX(to_receive);
+      sprintf(msg, "%d | %d | %d | %d \r\n\n", to_receive[0], to_receive[1], to_receive[2], to_receive[3]);
+      NU32_WriteUART1(msg);
+    }*/
+  } 
+}
