@@ -9,12 +9,12 @@
 #ifndef SPARKFUNNRF24LS01__H__
 #define SPARKFUNNRF24LS01__H__
 
-#define CS_CONFIG 		TRISBbits.TRISB8
-#define CS 				LATBbits.LATB8        // use RB8 as CS
-#define CE_CONFIG 	TRISBbits.TRISB10 
-#define CE 			LATBbits.LATB10 
+#define CS_CONFIG 		TRISBbits.TRISB8	
+#define CS 				LATBbits.LATB8      // use B8 as CS
+#define CE_CONFIG 		TRISBbits.TRISB10 
+#define CE 				LATBbits.LATB10 	// use B10 as CE
 #define RX_IRQ_CONFIG	TRISBbits.TRISB9
-#define RX_IRQ			PORTBbits.RB9
+#define RX_IRQ			PORTBbits.RB9		// use B9 as IRQ
 
 void radio_setup();
 void reset_RX(unsigned char *output);

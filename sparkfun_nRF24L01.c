@@ -181,31 +181,4 @@ void radio_setup() {      // setup the radio, using SPI 4
 
 }
 
-/*
-FROM ENCODER
 
-SPI4CON = 0;              // stop and reset SPI4
-  SPI4BUF;                  // read to clear the rx buffer
-  SPI4BRG = 0x3;            // bit rate to 10MHz, SPI4BRG = 80000000/(2*desired)-1
-  SPI4STATbits.SPIROV = 0;  // clear the overflow
-  SPI4CONbits.MSTEN = 1;    // master mode
-  SPI4CONbits.MODE16 = 1;   // 16 bit mode
-  SPI4CONbits.MODE32 = 0; 
-  SPI4CONbits.SMP = 1;      // sample at the end of the clock
-  SPI4CONbits.ON = 1;       // turn spi on
-
-*/
-
-/*
-FROM SAMPLES
-
-  SPI4CON = 0;              // turn off the SPI module and reset it
-  SPI4BUF;                  // clear the rx buffer by reading from it
-  SPI4BRG = 0x3;            // baud rate to 10MHz [SPI4BRG = (80000000/(2*desired))-1]
-  SPI4STATbits.SPIROV = 0;  // clear the overflow bit
-  SPI4CONbits.CKE = 1;      // data changes when clock goes from active to inactive 
-                            // (high to low since CKP is 0)
-  SPI4CONbits.MSTEN = 1;    // master operation
-  SPI4CONbits.ON = 1;       // turn on SPI 4
-
-*/
