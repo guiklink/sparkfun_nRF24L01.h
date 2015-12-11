@@ -13,8 +13,8 @@
 #define CS 				LATBbits.LATB8        // use RB8 as CS
 #define CE_CONFIG 	TRISBbits.TRISB10 
 #define CE 			LATBbits.LATB10 
-#define RX_IRQ_CONFIG	TRISAbits.TRISA0
-#define RX_IRQ			LATAbits.LATA0
+#define RX_IRQ_CONFIG	TRISBbits.TRISB9
+#define RX_IRQ			PORTBbits.RB9
 
 void radio_setup();
 void reset_RX(unsigned char *output);

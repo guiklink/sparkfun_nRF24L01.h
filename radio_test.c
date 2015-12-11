@@ -47,23 +47,18 @@ void tx_routine(){
     //NU32_WriteUART1("TX \r\n");
     LATAINV = 0x30;
     transmit_data(to_send, 4);
-    for(timer = 0; timer < 100000000; timer++){;}
+    for(timer = 0; timer < 10000000; timer++){;}
   }
 }
 
 void rx_routine(){
-  int irq;
   NU32_WriteUART1("Start receiver: \r\n");
   while(1){
-    irq = RX_IRQ;
-    sprintf(msg, "IRQ = %d \r\n\n", irq);
-    NU32_WriteUART1(msg);
-    //NU32_WriteUART1("Message received: \r\n");
-    /*if(!RX_IRQ){
+    if(!RX_IRQ){
       NU32_WriteUART1("Message received: \r\n");
       reset_RX(to_receive);
       sprintf(msg, "%d | %d | %d | %d \r\n\n", to_receive[0], to_receive[1], to_receive[2], to_receive[3]);
       NU32_WriteUART1(msg);
-    }*/
+    }
   } 
 }

@@ -74,7 +74,7 @@ void transmit_data(char *data_to_send, int n_bytes){
 
   CE = 1;                          //Pulse CE to start transmission
 
-  for (counter = 0; counter < 80000; counter++){;}  // Wait for 1 ms (assuming the PIC clock is set to 80MHz)
+  for (counter = 0; counter < 800000; counter++){;}  // Wait for 1 ms (assuming the PIC clock is set to 80MHz)
 
   CE = 0;
 }
@@ -95,19 +95,33 @@ void configure_transmitter(){
 
   radio_write_register(0x25, 0x02); // set channel 2, this is default
 
-  //radio_write_register(0x30, 0xE7); // set address E7E7E7E7E7
+  radio_write_register(0x30, 0xE7); // set address E7E7E7E7E7
 
   radio_write_register(0x21, 0x00); //disable auto-ack, RX mode, shouldn't have to do this, but it won't TX if you don't
 }
 
 void configure_receiver(){
+  unsigned char status;
+
   CE = 0;
 
-  radio_write_register(0x20, 0x39); //PRX, CRC enabled
+  status = radio_write_register(0x20, 0x39); //PRX, CRC enabled
 
-  radio_write_register(0x21, 0x00); //disable auto-ack for all channels
+  sprintf(msg,"%d \r\n", status);
+  NU32_WriteUART1("Status 1: ");
+  NU32_WriteUART1(msg);
 
-  radio_write_register(0x23, 0x03); // address width = 5
+  status = radio_write_register(0x21, 0x00); //disable auto-ack for all channels
+
+  sprintf(msg,"%d \r\n", status);
+  NU32_WriteUART1("Status 2: ");
+  NU32_WriteUART1(msg);
+
+  status = radio_write_register(0x23, 0x03); // address width = 5
+
+  sprintf(msg,"%d \r\n", status);
+  NU32_WriteUART1("Status 3: ");
+  NU32_WriteUART1(msg);
 
   radio_write_register(0x26, 0x07); // data rate = 1MB
 
@@ -115,7 +129,7 @@ void configure_receiver(){
 
   radio_write_register(0x25, 0x02); // set channel 2, this is default
 
-  //radio_write_register(0x30, 0xE7); // set address E7E7E7E7E7
+  radio_write_register(0x30, 0xE7); // set address E7E7E7E7E7
 
   radio_write_register(0x20, 0x3B); // Power up to change to change to STAND BY state
 
@@ -124,10 +138,9 @@ void configure_receiver(){
   int counter;
   for (counter = 0; counter < 80000; counter++){;}
 
-  unsigned char status = 14;
   status = radio_command(0xFF);
-  sprintf(msg,"%d", status);
-  NU32_WriteUART1("Status: \r\n");
+  sprintf(msg,"%d \r\n", status);
+  NU32_WriteUART1("Status 4: ");
   NU32_WriteUART1(msg);
 }
 
